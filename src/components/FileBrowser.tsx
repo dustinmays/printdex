@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from "react";
 import dynamic from "next/dynamic";
 import FileIcon from "./FileIcon";
 import CatalogView from "./CatalogView";
+import ImportModal from "./ImportModal";
+import { useImportJobs, ImportJobPills } from "./ImportJobTracker";
 
 const ModelViewer = dynamic(() => import("./ModelViewer"), { ssr: false });
 const ModelThumbnail = dynamic(() => import("./ModelThumbnail"), { ssr: false });
@@ -424,6 +426,8 @@ export default function FileBrowser() {
   const [selectedFile, setSelectedFile] = useState<FileEntry | null>(null);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<"list" | "grid">("grid");
+  const [importOpen, setImportOpen] = useState(false);
+  const [catalogKey, setCatalogKey] = useState(0);
 
   const fetchFiles = useCallback(async (dir: string) => {
     setLoading(true);
@@ -451,6 +455,14 @@ export default function FileBrowser() {
     const interval = setInterval(() => fetchFiles(currentDir), 30000);
     return () => clearInterval(interval);
   }, [currentDir, fetchFiles]);
+
+  const handleImportComplete = useCallback(() => {
+    fetchFiles(currentDir);
+    setCatalogKey((k) => k + 1);
+    fetch("/api/catalog", { method: "POST" }).catch(() => {});
+  }, [currentDir, fetchFiles]);
+
+  const { jobs: importJobs, submitImport, dismissJob } = useImportJobs(handleImportComplete);
 
   const navigate = useCallback((dir: string) => {
     setCurrentDir(dir);
@@ -523,10 +535,25 @@ export default function FileBrowser() {
             </button>
           </div>
         )}
+        <div className="flex items-center gap-2">
+          <ImportJobPills jobs={importJobs} onDismiss={dismissJob} />
+          <button
+            onClick={() => setImportOpen(true)}
+            className="px-3 py-1.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-500 transition-colors"
+          >
+            + Import
+          </button>
+        </div>
       </header>
 
+      <ImportModal
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        onSubmit={submitImport}
+      />
+
       {mode === "catalog" ? (
-        <CatalogView onNavigate={navigate} />
+        <CatalogView key={catalogKey} onNavigate={navigate} />
       ) : (
         <>
       {/* Breadcrumbs */}
