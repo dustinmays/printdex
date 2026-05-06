@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Disable Turbopack's aggressive file watching
+  turbopack: {},
 };
 
 export default nextConfig;
