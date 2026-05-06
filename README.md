@@ -1,36 +1,99 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# PrintFile Viewer
 
-## Getting Started
+A lightweight local web app for browsing and previewing 3D print files. Renders STL and 3MF models in the browser with Three.js, and indexes metadata from `prints.yaml` files for search and filtering.
 
-First, run the development server:
+## Quick Start
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cd viewer
+npm install
+npm run build
+npm start -- -p 3333
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3333](http://localhost:3333).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+For development with hot reload:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run dev -- -p 3333
+```
 
-## Learn More
+## Features
 
-To learn more about Next.js, take a look at the following resources:
+### File Browser
+- Folder tree sidebar with expand/collapse navigation
+- Grid view with 3D model thumbnails (rendered once as static images)
+- List view with file sizes and dates
+- Breadcrumb navigation with back button
+- Click any STL/3MF file to open an interactive 3D preview panel with orbit controls
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Catalog
+- Indexes all files across all subdirectories into a searchable list
+- Full-text search across filenames, print names, descriptions, tags, authors, and notes
+- Faceted filtering by material, nozzle size, layer height, status, tags, file type, and folder
+- Inventory is cached at startup; refresh button to rescan
+- Files with `prints.yaml` metadata show print specs; uncataloged files are labeled and excluded from metadata filters
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Import
+- Upload STL/3MF/STEP/ZIP files with a source URL (Printables, MakerWorld, etc.)
+- Spawns a background Claude agent that:
+  - Moves files from `inbox/` to the correct category folder
+  - Fetches metadata from the source URL
+  - Creates `prints.yaml` with print specs, tags, and notes
+- Runs asynchronously — modal closes immediately, status shows as a pill in the header
+- Multiple concurrent imports supported
 
-## Deploy on Vercel
+## Directory Structure
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```
+printerfiles/
+├── .claude/agents/inventory.md   # Claude agent for import processing
+├── inbox/                        # Upload target, agent processes files out
+├── calibration-and-testing/
+├── gridfinity/                   # Bins, holders, baseplates
+├── household/                    # Home items
+├── print-jobs/                   # Multi-model plate files
+├── printer-accessories/          # Build plate holders, risers
+├── qidi-q2/                      # Printer-specific parts
+├── tools/                        # Measuring tools, gauges
+└── viewer/                       # This app
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## prints.yaml
+
+Each folder can contain a `prints.yaml` file with metadata for its model files:
+
+```yaml
+- name: Gridfinity Caliper Holder
+  author: The Next Layer
+  source: https://www.printables.com/model/260633
+  description: >
+    Space-efficient caliper holder for Gridfinity.
+  files:
+    - caliper-holder.stl
+  material: PLA
+  nozzle: 0.4mm
+  layer_height: 0.2mm
+  infill: 15%
+  supports: false
+  print_time: "2h 30m"
+  tags: [gridfinity, organization]
+  status: to_print
+```
+
+Fields set to `~` (null) mean unspecified — the catalog treats these as "any" and excludes them from strict filter matching.
+
+## Configuration
+
+| Env Variable | Default | Description |
+|-------------|---------|-------------|
+| `WATCH_DIR` | `../` (parent of viewer) | Root directory to browse |
+| `PORT` | `3000` | Server port (override with `--port` or `-p`) |
+
+## Tech Stack
+
+- **Next.js 16** (App Router, production server)
+- **Three.js** + React Three Fiber for 3D rendering
+- **Tailwind CSS** for styling
+- **Claude Code** agent for import processing
