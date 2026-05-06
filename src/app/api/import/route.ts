@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { spawn, type ChildProcess } from "child_process";
+import { spawn, execSync, type ChildProcess } from "child_process";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { randomUUID } from "crypto";
-
-const BASE_DIR = process.env.WATCH_DIR || path.resolve(process.cwd(), "..");
-const INBOX_DIR = path.join(BASE_DIR, "inbox");
+import { getConfig } from "@/lib/config";
 
 interface ImportJob {
   id: string;
@@ -101,18 +99,34 @@ function deriveStatusMessage(event: Record<string, unknown>): string | null {
 }
 
 function startInventoryAgent(job: ImportJob) {
+  const config = getConfig();
   const fileList = job.files.join(", ");
 
+  // Build prompt with printer context from config
   const promptParts = [
     `Process new files in the inbox: ${fileList}`,
     `These ${job.files.length > 1 ? `${job.files.length} files are from the same project/model — group them into one folder with a single prints.yaml entry listing all files.` : "file needs to be organized and cataloged."}`,
     job.url ? `Source URL: ${job.url}` : "",
     job.notes ? `User notes: ${job.notes}` : "",
-    "Move files out of inbox first, then fetch metadata from the source URL and create prints.yaml.",
-  ].filter(Boolean);
+  ];
 
-  const prompt = promptParts.join("\n");
+  // Inject printer/defaults context
+  if (config.printers.length > 0) {
+    const printerInfo = config.printers
+      .map((p) => `${p.name} (nozzles: ${p.nozzle_sizes.join("/")}mm, bed: ${p.bed_size.join("x")}mm)`)
+      .join(", ");
+    promptParts.push(`User's printer(s): ${printerInfo}`);
+  }
+  if (config.defaults.material) {
+    promptParts.push(`Default material: ${config.defaults.material}`);
+  }
 
+  promptParts.push("Move files out of inbox first, then fetch metadata from the source URL and create prints.yaml.");
+
+  const prompt = promptParts.filter(Boolean).join("\n");
+
+  // Spawn claude with cwd at PrintDex root (so --agent inventory resolves)
+  // and pass the files directory as an env var for the agent
   const proc = spawn(
     "claude",
     [
@@ -123,17 +137,18 @@ function startInventoryAgent(job: ImportJob) {
       "--output-format",
       "stream-json",
       "--max-turns",
-      "30",
+      String(config.import.max_turns),
       "--max-budget-usd",
-      "1.00",
+      String(config.import.max_budget_usd),
       "--permission-mode",
       "acceptEdits",
       "--allowedTools",
       "Read,Write,Edit,Glob,Grep,WebFetch,Bash(mv inbox/*),Bash(mv inbox/**/*),Bash(mkdir *),Bash(mkdir -p *),Bash(unzip *),Bash(rm inbox/*),Bash(ls *),Bash(diff *)",
     ],
     {
-      cwd: BASE_DIR,
+      cwd: config.baseDir,
       stdio: ["pipe", "pipe", "pipe"],
+      env: { ...process.env, PRINTDEX_FILES_DIR: config.baseDir },
     }
   );
 
@@ -207,10 +222,35 @@ function startInventoryAgent(job: ImportJob) {
   });
 }
 
+function isClaudeInstalled(): boolean {
+  try {
+    execSync("which claude", { stdio: "ignore" });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export async function POST(request: NextRequest) {
   pruneJobs();
 
   try {
+    const config = getConfig();
+
+    if (!config.import.enabled) {
+      return NextResponse.json(
+        { error: "Import is disabled in config.yaml. Set import.enabled to true and ensure Claude Code CLI is installed." },
+        { status: 501 }
+      );
+    }
+
+    if (!isClaudeInstalled()) {
+      return NextResponse.json(
+        { error: "Claude Code CLI is not installed. Install it from https://claude.ai/code to use the import feature." },
+        { status: 501 }
+      );
+    }
+
     const formData = await request.formData();
     const url = (formData.get("url") as string) || "";
     const notes = (formData.get("notes") as string) || "";
@@ -223,14 +263,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Ensure inbox exists
-    await mkdir(INBOX_DIR, { recursive: true });
+    const inboxDir = path.join(config.baseDir, "inbox");
+    await mkdir(inboxDir, { recursive: true });
 
     // Save files to inbox
     const savedFiles: string[] = [];
     for (const file of files) {
       const buffer = Buffer.from(await file.arrayBuffer());
-      const filePath = path.join(INBOX_DIR, file.name);
+      const filePath = path.join(inboxDir, file.name);
       await writeFile(filePath, buffer);
       savedFiles.push(file.name);
     }

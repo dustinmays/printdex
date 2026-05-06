@@ -1,0 +1,29 @@
+# PrintDex Configuration
+# Copy this file to config.yaml and edit to match your setup.
+# Or run: claude --agent onboarding
+
+# Path to your 3D print files directory (absolute or relative, ~ supported)
+watch_dir: ~/3d-prints
+
+# Directories to exclude from file listings (dotfiles always excluded)
+exclude_dirs: [.git, node_modules]
+
+# Your printer(s)
+printers:
+  - name: My Printer
+    nozzle_sizes: [0.4]
+    bed_size: [220, 220, 250]  # X, Y, Z in mm
+    heated_bed: true
+    enclosure: false
+
+# Default print settings (used as hints during import)
+defaults:
+  material: PLA
+  nozzle: 0.4mm
+  layer_height: 0.2mm
+
+# Import agent settings (requires Claude Code CLI)
+import:
+  enabled: true
+  max_budget_usd: 1.00
+  max_turns: 30

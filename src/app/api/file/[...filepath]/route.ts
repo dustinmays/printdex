@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { readFile, stat as fsStat } from "fs/promises";
 import path from "path";
-
-const BASE_DIR = process.env.WATCH_DIR || path.resolve(process.cwd(), "..");
+import { getConfig } from "@/lib/config";
 
 const CONTENT_TYPES: Record<string, string> = {
   ".stl": "application/octet-stream",
@@ -19,9 +18,9 @@ export async function GET(
   try {
     const { filepath } = await params;
     const relativePath = filepath.map(decodeURIComponent).join("/");
-    const fullPath = path.resolve(BASE_DIR, relativePath);
+    const fullPath = path.resolve(getConfig().baseDir, relativePath);
 
-    if (!fullPath.startsWith(BASE_DIR)) {
+    if (!fullPath.startsWith(getConfig().baseDir)) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 

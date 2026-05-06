@@ -59,7 +59,7 @@ function startInventoryAgent(url: string, files: string[], notes: string): Child
     '--allowedTools', 'Read,Write,Edit,Glob,Grep,WebFetch,Bash(mv:*),Bash(mkdir:*),Bash(unzip:*),Bash(rm:*),Bash(ls:*),Bash(diff:*)',
     '--', prompt,
   ], {
-    cwd: '/Users/dustin/repos/printerfiles',
+    cwd: getConfig().baseDir,
     stdio: ['pipe', 'pipe', 'pipe'],
   });
 

@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "PrintFile Viewer",
+  title: "PrintDex",
   description: "3D print file browser and previewer",
 };
 

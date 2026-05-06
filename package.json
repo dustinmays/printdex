@@ -1,17 +1,19 @@
 {
-  "name": "viewer",
+  "name": "printdex",
   "version": "0.1.0",
-  "private": true,
+  "description": "Local 3D print file browser and organizer with AI-powered import",
+  "license": "MIT",
+  "keywords": ["3d-printing", "stl", "3mf", "file-browser", "three-js", "printables"],
   "scripts": {
     "dev": "next dev --webpack",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "setup": "claude --agent onboarding"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.6.1",
-    "@types/chokidar": "^1.7.5",
     "@types/three": "^0.184.0",
     "fflate": "^0.8.2",
     "next": "16.2.4",

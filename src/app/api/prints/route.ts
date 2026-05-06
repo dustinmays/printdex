@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { readFile, stat as fsStat } from "fs/promises";
 import path from "path";
 import YAML from "yaml";
-
-const BASE_DIR = process.env.WATCH_DIR || path.resolve(process.cwd(), "..");
+import { getConfig } from "@/lib/config";
 
 export interface PrintEntry {
   name: string;
@@ -41,8 +40,8 @@ export async function GET(request: NextRequest) {
     const dirPath = searchParams.get("dir");
 
     if (filePath) {
-      const fullPath = path.resolve(BASE_DIR, filePath);
-      if (!fullPath.startsWith(BASE_DIR)) {
+      const fullPath = path.resolve(getConfig().baseDir, filePath);
+      if (!fullPath.startsWith(getConfig().baseDir)) {
         return NextResponse.json({ error: "Access denied" }, { status: 403 });
       }
 
@@ -61,7 +60,7 @@ export async function GET(request: NextRequest) {
             entry.files?.includes(relativeFromYamlDir)
         );
         if (match) {
-          return NextResponse.json({ entry: match, yamlDir: path.relative(BASE_DIR, searchDir) });
+          return NextResponse.json({ entry: match, yamlDir: path.relative(getConfig().baseDir, searchDir) });
         }
       }
 
@@ -69,8 +68,8 @@ export async function GET(request: NextRequest) {
     }
 
     if (dirPath) {
-      const fullDir = path.resolve(BASE_DIR, dirPath);
-      if (!fullDir.startsWith(BASE_DIR)) {
+      const fullDir = path.resolve(getConfig().baseDir, dirPath);
+      if (!fullDir.startsWith(getConfig().baseDir)) {
         return NextResponse.json({ error: "Access denied" }, { status: 403 });
       }
 

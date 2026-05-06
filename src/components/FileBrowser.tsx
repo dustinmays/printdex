@@ -486,7 +486,7 @@ export default function FileBrowser() {
       <header className="flex items-center justify-between px-4 py-3 bg-gray-900 border-b border-gray-800">
         <div className="flex items-center gap-4">
           <h1 className="text-lg font-semibold tracking-tight">
-            PrintFile Viewer
+            PrintDex
           </h1>
           <div className="flex items-center gap-1 bg-gray-800 rounded p-0.5">
             <button

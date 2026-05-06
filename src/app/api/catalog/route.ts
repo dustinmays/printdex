@@ -2,11 +2,9 @@ import { NextResponse } from "next/server";
 import { readFile, readdir, stat as fsStat } from "fs/promises";
 import path from "path";
 import YAML from "yaml";
-
-const BASE_DIR = process.env.WATCH_DIR || path.resolve(process.cwd(), "..");
+import { getConfig } from "@/lib/config";
 
 const PREVIEWABLE = new Set([".stl", ".obj", ".3mf", ".step", ".stp"]);
-const SKIP = new Set([".", "..", "node_modules", "viewer", ".git", ".DS_Store"]);
 
 interface PrintEntry {
   name?: string;
@@ -78,6 +76,8 @@ function norm(val: unknown): string | null {
 
 async function scanDir(
   dirPath: string,
+  baseDir: string,
+  excludes: Set<string>,
   catalog: CatalogItem[],
   printEntries: Map<string, { entry: PrintEntry; yamlDir: string }>
 ) {
@@ -97,8 +97,8 @@ async function scanDir(
         if (entry.files) {
           for (const file of entry.files) {
             const fullFilePath = path.resolve(dirPath, file);
-            const relPath = path.relative(BASE_DIR, fullFilePath);
-            printEntries.set(relPath, { entry, yamlDir: path.relative(BASE_DIR, dirPath) });
+            const relPath = path.relative(baseDir, fullFilePath);
+            printEntries.set(relPath, { entry, yamlDir: path.relative(baseDir, dirPath) });
           }
         }
       }
@@ -108,12 +108,12 @@ async function scanDir(
   }
 
   for (const entry of entries) {
-    if (SKIP.has(entry.name) || entry.name.startsWith(".")) continue;
+    if (excludes.has(entry.name) || entry.name.startsWith(".")) continue;
 
     const fullPath = path.join(dirPath, entry.name);
 
     if (entry.isDirectory()) {
-      await scanDir(fullPath, catalog, printEntries);
+      await scanDir(fullPath, baseDir, excludes, catalog, printEntries);
       continue;
     }
 
@@ -125,8 +125,8 @@ async function scanDir(
 
     catalog.push({
       fileName: entry.name,
-      relativePath: path.relative(BASE_DIR, fullPath),
-      dirPath: path.relative(BASE_DIR, dirPath),
+      relativePath: path.relative(baseDir, fullPath),
+      dirPath: path.relative(baseDir, dirPath),
       extension: ext,
       size: fileStat.size,
       modified: fileStat.mtime.toISOString(),
@@ -150,10 +150,12 @@ async function scanDir(
 }
 
 async function buildCatalog(): Promise<CatalogCache> {
+  const config = getConfig();
+  const excludes = new Set(config.excludeDirs);
   const catalog: CatalogItem[] = [];
   const printEntries = new Map<string, { entry: PrintEntry; yamlDir: string }>();
 
-  await scanDir(BASE_DIR, catalog, printEntries);
+  await scanDir(config.baseDir, config.baseDir, excludes, catalog, printEntries);
 
   for (const item of catalog) {
     const match = printEntries.get(item.relativePath);

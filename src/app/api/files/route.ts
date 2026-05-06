@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
-
-const BASE_DIR = process.env.WATCH_DIR || path.resolve(process.cwd(), "..");
+import { getConfig } from "@/lib/config";
 
 const SUPPORTED_EXTENSIONS = new Set([".stl", ".obj", ".3mf", ".step", ".stp"]);
 
@@ -18,10 +17,12 @@ interface FileEntry {
 }
 
 function getFilesInDirectory(dirPath: string): FileEntry[] {
-  const resolvedPath = path.resolve(BASE_DIR, dirPath);
+  const config = getConfig();
+  const baseDir = config.baseDir;
+  const excludes = new Set(config.excludeDirs);
+  const resolvedPath = path.resolve(baseDir, dirPath);
 
-  // Prevent path traversal
-  if (!resolvedPath.startsWith(BASE_DIR)) {
+  if (!resolvedPath.startsWith(baseDir)) {
     throw new Error("Access denied");
   }
 
@@ -32,12 +33,12 @@ function getFilesInDirectory(dirPath: string): FileEntry[] {
   const entries = fs.readdirSync(resolvedPath, { withFileTypes: true });
 
   return entries
-    .filter((entry) => !entry.name.startsWith(".") && entry.name !== "node_modules" && entry.name !== "viewer")
+    .filter((entry) => !entry.name.startsWith(".") && !excludes.has(entry.name))
     .map((entry) => {
       const fullPath = path.join(resolvedPath, entry.name);
       const stat = fs.statSync(fullPath);
       const ext = path.extname(entry.name).toLowerCase();
-      const relativePath = path.relative(BASE_DIR, fullPath);
+      const relativePath = path.relative(baseDir, fullPath);
 
       return {
         name: entry.name,
@@ -51,7 +52,6 @@ function getFilesInDirectory(dirPath: string): FileEntry[] {
       };
     })
     .sort((a, b) => {
-      // Directories first, then alphabetical
       if (a.isDirectory && !b.isDirectory) return -1;
       if (!a.isDirectory && b.isDirectory) return 1;
       return a.name.localeCompare(b.name);
@@ -62,11 +62,10 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     const dir = searchParams.get("dir") || "";
-
     const files = getFilesInDirectory(dir);
 
     return NextResponse.json({
-      baseDir: BASE_DIR,
+      baseDir: getConfig().baseDir,
       currentDir: dir,
       files,
     });
