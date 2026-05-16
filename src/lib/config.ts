@@ -21,6 +21,7 @@ interface ImportConfig {
   enabled: boolean;
   max_budget_usd: number;
   max_turns: number;
+  model?: string;
 }
 
 interface RawConfig {
@@ -90,6 +91,7 @@ function loadConfig(): PrintDexConfig {
         enabled: raw.import?.enabled ?? true,
         max_budget_usd: raw.import?.max_budget_usd ?? 1.0,
         max_turns: raw.import?.max_turns ?? 30,
+        model: raw.import?.model,
       },
     };
   }

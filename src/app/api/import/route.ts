@@ -127,24 +127,29 @@ function startInventoryAgent(job: ImportJob) {
 
   // Spawn claude with cwd at PrintDex root (so --agent inventory resolves)
   // and pass the files directory as an env var for the agent
+  const claudeArgs = [
+    "--agent",
+    "inventory",
+    "-p",
+    "--verbose",
+    "--output-format",
+    "stream-json",
+    "--max-turns",
+    String(config.import.max_turns),
+    "--max-budget-usd",
+    String(config.import.max_budget_usd),
+    "--permission-mode",
+    "acceptEdits",
+    "--allowedTools",
+    "Read,Write,Edit,Glob,Grep,WebFetch,Bash(mv inbox/*),Bash(mv inbox/**/*),Bash(mkdir *),Bash(mkdir -p *),Bash(unzip *),Bash(rm inbox/*),Bash(ls *),Bash(diff *)",
+  ];
+  if (config.import.model) {
+    claudeArgs.push("--model", config.import.model);
+  }
+
   const proc = spawn(
     "claude",
-    [
-      "--agent",
-      "inventory",
-      "-p",
-      "--verbose",
-      "--output-format",
-      "stream-json",
-      "--max-turns",
-      String(config.import.max_turns),
-      "--max-budget-usd",
-      String(config.import.max_budget_usd),
-      "--permission-mode",
-      "acceptEdits",
-      "--allowedTools",
-      "Read,Write,Edit,Glob,Grep,WebFetch,Bash(mv inbox/*),Bash(mv inbox/**/*),Bash(mkdir *),Bash(mkdir -p *),Bash(unzip *),Bash(rm inbox/*),Bash(ls *),Bash(diff *)",
-    ],
+    claudeArgs,
     {
       cwd: config.baseDir,
       stdio: ["pipe", "pipe", "pipe"],

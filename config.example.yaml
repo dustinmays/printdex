@@ -27,3 +27,6 @@ import:
   enabled: true
   max_budget_usd: 1.00
   max_turns: 30
+  # Model to use for the import agent. Omit to use Claude Code's default.
+  # Haiku is much faster and cheap enough for cataloging tasks.
+  model: claude-haiku-4-5-20251001
