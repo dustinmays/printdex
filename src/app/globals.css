@@ -1,13 +1,98 @@
 @import "tailwindcss";
 
+@custom-variant dark ([data-mode="dark"] &);
+
+/* ── Paper Cutout — Light (default) ──────────────────────────── */
 :root {
-  --background: #0a0a0a;
-  --foreground: #ededed;
+  --background: #faf6ee;
+  --foreground: #2c2a26;
+
+  --card: #fffdf7;
+  --card-foreground: #2c2a26;
+  --muted: #efe9dc;
+  --muted-foreground: #6b6862;
+
+  --border: #d9d1be;
+  --input: #efe9dc;
+
+  --primary: #b85c38;
+  --primary-foreground: #fffdf7;
+  --primary-hover: #a04e2e;
+  --primary-rgb: 184, 92, 56;
+
+  --accent: #4a7c7e;
+  --accent-foreground: #fffdf7;
+
+  --success: #5b7c46;
+  --success-foreground: #fffdf7;
+  --warning: #c9883b;
+  --warning-foreground: #2c2a26;
+  --error: #a6442e;
+  --error-foreground: #fffdf7;
+
+  --radius: 0.5rem;
+  --shadow-paper: 0 1px 2px rgba(60, 45, 25, 0.08),
+    0 2px 8px rgba(60, 45, 25, 0.06);
+  --shadow-paper-lg: 0 2px 4px rgba(60, 45, 25, 0.1),
+    0 8px 24px rgba(60, 45, 25, 0.08);
+}
+
+/* ── Paper Cutout — Dark (ink on paper) ───────────────────────── */
+[data-mode="dark"] {
+  --background: #1a1816;
+  --foreground: #e8dfcb;
+
+  --card: #25221e;
+  --card-foreground: #e8dfcb;
+  --muted: #2f2b26;
+  --muted-foreground: #94897a;
+
+  --border: #3a352e;
+  --input: #2f2b26;
+
+  --primary: #d17751;
+  --primary-foreground: #1a1816;
+  --primary-hover: #de8a66;
+  --primary-rgb: 209, 119, 81;
+
+  --accent: #6a9d9f;
+  --accent-foreground: #1a1816;
+
+  --success: #7da15f;
+  --success-foreground: #1a1816;
+  --warning: #dea15a;
+  --warning-foreground: #1a1816;
+  --error: #c56a55;
+  --error-foreground: #1a1816;
+
+  --shadow-paper: 0 1px 2px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.25);
+  --shadow-paper-lg: 0 2px 4px rgba(0, 0, 0, 0.35),
+    0 8px 24px rgba(0, 0, 0, 0.3);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-error: var(--error);
+  --color-error-foreground: var(--error-foreground);
+  --shadow-paper: var(--shadow-paper);
+  --shadow-paper-lg: var(--shadow-paper-lg);
+  --radius-paper: var(--radius);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -18,20 +103,16 @@ body {
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }
 
-/* Remove scrollbar in grid view for cleaner look */
 ::-webkit-scrollbar {
   width: 8px;
 }
-
 ::-webkit-scrollbar-track {
-  background: #111;
+  background: var(--background);
 }
-
 ::-webkit-scrollbar-thumb {
-  background: #333;
+  background: var(--border);
   border-radius: 4px;
 }
-
 ::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: var(--muted-foreground);
 }

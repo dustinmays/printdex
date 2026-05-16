@@ -178,14 +178,14 @@ export function ImportJobPills({
             }
             className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] transition-colors ${
               job.status === "running"
-                ? "bg-blue-900/50 text-blue-300"
+                ? "bg-primary/20 text-primary"
                 : job.status === "completed"
-                ? "bg-green-900/50 text-green-300"
-                : "bg-red-900/50 text-red-300"
+                ? "bg-success/20 text-success"
+                : "bg-error/20 text-error"
             }`}
           >
             {job.status === "running" && (
-              <div className="w-3 h-3 border-[1.5px] border-blue-400 border-t-transparent rounded-full animate-spin" />
+              <div className="w-3 h-3 border-[1.5px] border-primary border-t-transparent rounded-full animate-spin" />
             )}
             {job.status === "completed" && <span>✓</span>}
             {job.status === "failed" && <span>✕</span>}
@@ -197,9 +197,9 @@ export function ImportJobPills({
 
           {/* Expanded dropdown */}
           {expanded === job.id && (
-            <div className="absolute right-0 top-full mt-1 w-80 bg-gray-900 border border-gray-700 rounded-lg shadow-xl z-50 overflow-hidden">
-              <div className="px-3 py-2 border-b border-gray-800 flex items-center justify-between">
-                <span className="text-xs font-medium text-gray-300">
+            <div className="absolute right-0 top-full mt-1 w-80 bg-background border border-border rounded-lg shadow-xl z-50 overflow-hidden">
+              <div className="px-3 py-2 border-b border-border flex items-center justify-between">
+                <span className="text-xs font-medium text-foreground">
                   Import: {job.files.join(", ")}
                 </span>
                 {job.status !== "running" && (
@@ -208,7 +208,7 @@ export function ImportJobPills({
                       e.stopPropagation();
                       onDismiss(job.id);
                     }}
-                    className="text-gray-500 hover:text-white text-sm"
+                    className="text-muted-foreground hover:text-foreground text-sm"
                   >
                     ✕
                   </button>
@@ -216,29 +216,29 @@ export function ImportJobPills({
               </div>
               <div className="px-3 py-2 space-y-1.5 max-h-48 overflow-y-auto">
                 {job.status === "running" && (
-                  <p className="text-[11px] text-blue-300">
+                  <p className="text-[11px] text-primary">
                     {job.latestMessage}
                   </p>
                 )}
                 {job.status === "completed" && job.result && (
                   <>
-                    <p className="text-[11px] text-green-300 whitespace-pre-wrap">
+                    <p className="text-[11px] text-success whitespace-pre-wrap">
                       {job.result.summary}
                     </p>
-                    <p className="text-[10px] text-gray-600">
+                    <p className="text-[10px] text-muted-foreground">
                       {job.result.num_turns} steps &middot; $
                       {job.result.cost_usd.toFixed(3)}
                     </p>
                   </>
                 )}
                 {job.status === "failed" && (
-                  <p className="text-[11px] text-red-400">{job.error}</p>
+                  <p className="text-[11px] text-error">{job.error}</p>
                 )}
                 {job.events
                   .filter((e) => e.message)
                   .slice(-8)
                   .map((e, i) => (
-                    <p key={i} className="text-[10px] text-gray-600">
+                    <p key={i} className="text-[10px] text-muted-foreground">
                       {e.message}
                     </p>
                   ))}

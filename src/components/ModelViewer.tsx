@@ -129,14 +129,14 @@ export default function ModelViewer({
 
   if (error) {
     return (
-      <div className={`flex items-center justify-center bg-gray-900 text-gray-400 text-sm ${className}`}>
+      <div className={`flex items-center justify-center bg-background text-muted-foreground text-sm ${className}`}>
         Failed to load preview
       </div>
     );
   }
 
   return (
-    <div className={`bg-gray-900 ${className}`}>
+    <div className={`bg-background ${className}`}>
       <Canvas
         frameloop="demand"
         shadows

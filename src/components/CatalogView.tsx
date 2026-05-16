@@ -57,13 +57,13 @@ function fileUrl(relativePath: string) {
 
 function StatusBadge({ status }: { status: string }) {
   const colors: Record<string, string> = {
-    to_print: "bg-yellow-900/50 text-yellow-300",
-    printing: "bg-blue-900/50 text-blue-300",
-    printed: "bg-green-900/50 text-green-300",
-    failed: "bg-red-900/50 text-red-300",
+    to_print: "bg-warning/20 text-warning",
+    printing: "bg-primary/20 text-primary",
+    printed: "bg-success/20 text-success",
+    failed: "bg-error/20 text-error",
   };
   return (
-    <span className={`text-[10px] px-1.5 py-0.5 rounded ${colors[status] || "bg-gray-700 text-gray-300"}`}>
+    <span className={`text-[10px] px-1.5 py-0.5 rounded ${colors[status] || "bg-muted text-foreground"}`}>
       {status.replace(/_/g, " ")}
     </span>
   );
@@ -90,28 +90,28 @@ function FilterGroup({
     <div className="mb-3">
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center justify-between text-xs font-medium text-gray-300 mb-1"
+        className="w-full flex items-center justify-between text-xs font-medium text-foreground mb-1"
       >
         <span>
           {label}
           {selected.size > 0 && (
-            <span className="ml-1 text-blue-400">({selected.size})</span>
+            <span className="ml-1 text-primary">({selected.size})</span>
           )}
         </span>
-        <span className="text-gray-600">{expanded ? "▼" : "▶"}</span>
+        <span className="text-muted-foreground">{expanded ? "▼" : "▶"}</span>
       </button>
       {expanded && (
         <div className="space-y-0.5">
           {options.map((opt) => (
             <label
               key={opt}
-              className="flex items-center gap-2 py-0.5 px-1 rounded text-[11px] text-gray-400 hover:text-white hover:bg-gray-800/40 cursor-pointer"
+              className="flex items-center gap-2 py-0.5 px-1 rounded text-[11px] text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer"
             >
               <input
                 type="checkbox"
                 checked={selected.has(opt)}
                 onChange={() => onToggle(opt)}
-                className="w-3 h-3 rounded border-gray-600 bg-gray-800 accent-blue-500"
+                className="w-3 h-3 rounded border-border bg-card accent-blue-500"
               />
               <span className="truncate">{opt}</span>
             </label>
@@ -148,35 +148,35 @@ function FilterSidebar({
   const hasFilters = Object.values(filters).some((s) => s.size > 0);
 
   return (
-    <div className="w-56 flex-shrink-0 border-r border-gray-800 bg-gray-900/50 overflow-y-auto p-3">
+    <div className="w-56 flex-shrink-0 border-r border-border bg-card overflow-y-auto p-3">
       {/* Stats + refresh */}
       <div className="mb-3 space-y-1.5">
         <div className="flex items-center justify-between">
-          <span className="text-xs text-gray-500">
+          <span className="text-xs text-muted-foreground">
             {resultCount} / {totalCount} files
           </span>
           {hasFilters && (
             <button
               onClick={onClear}
-              className="text-[10px] text-blue-400 hover:text-blue-300"
+              className="text-[10px] text-primary hover:text-primary"
             >
               Clear all
             </button>
           )}
         </div>
-        <div className="text-[10px] text-gray-600">
+        <div className="text-[10px] text-muted-foreground">
           {catalogedCount} cataloged &middot; {totalCount - catalogedCount} uncataloged
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={onRefresh}
             disabled={refreshing}
-            className="text-[10px] px-2 py-0.5 rounded bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700 disabled:opacity-50 transition-colors"
+            className="text-[10px] px-2 py-0.5 rounded bg-card text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-50 transition-colors"
           >
             {refreshing ? "Scanning..." : "Refresh"}
           </button>
           {builtAt && (
-            <span className="text-[9px] text-gray-600">
+            <span className="text-[9px] text-muted-foreground">
               {new Date(builtAt).toLocaleTimeString()}
             </span>
           )}
@@ -251,22 +251,22 @@ function DetailPanel({
   ].filter((f) => f.value);
 
   return (
-    <div className="w-1/2 border-l border-gray-800 flex flex-col">
-      <div className="flex items-center justify-between px-4 py-2 bg-gray-900 border-b border-gray-800">
+    <div className="w-1/2 border-l border-border flex flex-col">
+      <div className="flex items-center justify-between px-4 py-2 bg-background border-b border-border">
         <div className="min-w-0">
           <h2 className="font-medium text-sm truncate">
             {item.printName || item.fileName}
           </h2>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-muted-foreground">
             {formatSize(item.size)} &middot; {item.extension.toUpperCase().slice(1)}
             {!item.hasMeta && (
-              <span className="ml-2 text-yellow-600">No prints.yaml</span>
+              <span className="ml-2 text-warning">No prints.yaml</span>
             )}
           </p>
         </div>
         <button
           onClick={onClose}
-          className="text-gray-400 hover:text-white text-lg flex-shrink-0 ml-2"
+          className="text-muted-foreground hover:text-foreground text-lg flex-shrink-0 ml-2"
         >
           ✕
         </button>
@@ -280,24 +280,24 @@ function DetailPanel({
         />
       </div>
 
-      <div className="border-t border-gray-800 bg-gray-900 px-4 py-3 overflow-y-auto max-h-64 space-y-2">
+      <div className="border-t border-border bg-background px-4 py-3 overflow-y-auto max-h-64 space-y-2">
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => onNavigate(item.dirPath)}
-            className="text-[11px] px-2.5 py-1 rounded bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
+            className="text-[11px] px-2.5 py-1 rounded bg-card text-foreground hover:bg-muted hover:text-foreground transition-colors"
           >
             Open folder
           </button>
           <a
             href={fileUrl(item.relativePath)}
             download={item.fileName}
-            className="text-[11px] px-2.5 py-1 rounded bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
+            className="text-[11px] px-2.5 py-1 rounded bg-card text-foreground hover:bg-muted hover:text-foreground transition-colors"
           >
             Download
           </a>
           <button
             onClick={() => navigator.clipboard.writeText(item.relativePath)}
-            className="text-[11px] px-2.5 py-1 rounded bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
+            className="text-[11px] px-2.5 py-1 rounded bg-card text-foreground hover:bg-muted hover:text-foreground transition-colors"
           >
             Copy path
           </button>
@@ -306,12 +306,12 @@ function DetailPanel({
         <div className="flex items-center gap-2">
           {item.status && <StatusBadge status={item.status} />}
           {item.author && (
-            <span className="text-[11px] text-gray-500">by {item.author}</span>
+            <span className="text-[11px] text-muted-foreground">by {item.author}</span>
           )}
         </div>
 
         {item.description && (
-          <p className="text-[11px] text-gray-400 leading-relaxed">
+          <p className="text-[11px] text-muted-foreground leading-relaxed">
             {item.description}
           </p>
         )}
@@ -320,8 +320,8 @@ function DetailPanel({
           <div className="grid grid-cols-2 gap-x-3 gap-y-1">
             {fields.map((f) => (
               <div key={f.label} className="text-[11px]">
-                <span className="text-gray-500">{f.label}: </span>
-                <span className="text-gray-300">{f.value}</span>
+                <span className="text-muted-foreground">{f.label}: </span>
+                <span className="text-foreground">{f.value}</span>
               </div>
             ))}
           </div>
@@ -332,7 +332,7 @@ function DetailPanel({
             {item.tags.map((tag) => (
               <span
                 key={tag}
-                className="text-[10px] px-1.5 py-0.5 rounded bg-gray-800 text-gray-400"
+                className="text-[10px] px-1.5 py-0.5 rounded bg-card text-muted-foreground"
               >
                 {tag}
               </span>
@@ -341,17 +341,17 @@ function DetailPanel({
         )}
 
         <div className="text-[11px]">
-          <span className="text-gray-500">Location: </span>
+          <span className="text-muted-foreground">Location: </span>
           <button
             onClick={() => onNavigate(item.dirPath)}
-            className="text-blue-400 hover:text-blue-300"
+            className="text-primary hover:text-primary"
           >
             {item.dirPath || "/"}
           </button>
         </div>
 
         {item.notes && (
-          <p className="text-[11px] text-gray-500 italic leading-relaxed">
+          <p className="text-[11px] text-muted-foreground italic leading-relaxed">
             {item.notes}
           </p>
         )}
@@ -361,7 +361,7 @@ function DetailPanel({
             href={item.source}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[11px] text-blue-400 hover:text-blue-300 underline"
+            className="text-[11px] text-primary hover:text-primary underline"
           >
             View on source
           </a>
@@ -526,7 +526,7 @@ export default function CatalogView({
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full text-gray-500">
+      <div className="flex items-center justify-center h-full text-muted-foreground">
         Building inventory...
       </div>
     );
@@ -549,18 +549,18 @@ export default function CatalogView({
 
       <div className={`flex-1 flex flex-col overflow-hidden ${selectedItem ? "w-1/2" : ""}`}>
         {/* Search + sort bar */}
-        <div className="flex items-center gap-3 px-4 py-2 border-b border-gray-800 bg-gray-900/50">
+        <div className="flex items-center gap-3 px-4 py-2 border-b border-border bg-card">
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search files, names, tags, materials..."
-            className="flex-1 bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-sm text-gray-200 placeholder-gray-500 outline-none focus:border-blue-600"
+            className="flex-1 bg-card border border-border rounded px-3 py-1.5 text-sm text-foreground placeholder-gray-500 outline-none focus:border-primary"
           />
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-            className="bg-gray-800 border border-gray-700 rounded px-2 py-1.5 text-xs text-gray-300 outline-none"
+            className="bg-card border border-border rounded px-2 py-1.5 text-xs text-foreground outline-none"
           >
             <option value="name">Name</option>
             <option value="modified">Recent</option>
@@ -571,7 +571,7 @@ export default function CatalogView({
         {/* Results list */}
         <div className="flex-1 overflow-y-auto">
           {filtered.length === 0 ? (
-            <div className="flex items-center justify-center h-full text-gray-500 text-sm">
+            <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
               No files match your filters
             </div>
           ) : (
@@ -588,12 +588,12 @@ export default function CatalogView({
                   }
                   className={`flex items-center gap-3 px-4 py-2.5 cursor-pointer transition-colors ${
                     selectedItem?.relativePath === item.relativePath
-                      ? "bg-blue-900/30"
-                      : "hover:bg-gray-800/50"
+                      ? "bg-primary/20"
+                      : "hover:bg-card/50"
                   }`}
                 >
                   {/* Tiny thumbnail */}
-                  <div className="w-12 h-12 rounded bg-gray-900 overflow-hidden flex-shrink-0">
+                  <div className="w-12 h-12 rounded bg-background overflow-hidden flex-shrink-0">
                     <ModelThumbnail
                       url={fileUrl(item.relativePath)}
                       extension={item.extension}
@@ -609,12 +609,12 @@ export default function CatalogView({
                       </span>
                       {item.status && <StatusBadge status={item.status} />}
                       {!item.hasMeta && (
-                        <span className="text-[9px] px-1 py-0.5 rounded bg-gray-800 text-gray-600">
+                        <span className="text-[9px] px-1 py-0.5 rounded bg-card text-muted-foreground">
                           uncataloged
                         </span>
                       )}
                     </div>
-                    <div className="flex items-center gap-2 text-[11px] text-gray-500 mt-0.5">
+                    <div className="flex items-center gap-2 text-[11px] text-muted-foreground mt-0.5">
                       <span>{item.dirPath || "/"}</span>
                       <span>&middot;</span>
                       <span>{formatSize(item.size)}</span>
@@ -636,13 +636,13 @@ export default function CatalogView({
                         {item.tags.slice(0, 5).map((tag) => (
                           <span
                             key={tag}
-                            className="text-[9px] px-1 py-0.5 rounded bg-gray-800 text-gray-500"
+                            className="text-[9px] px-1 py-0.5 rounded bg-card text-muted-foreground"
                           >
                             {tag}
                           </span>
                         ))}
                         {item.tags.length > 5 && (
-                          <span className="text-[9px] text-gray-600">
+                          <span className="text-[9px] text-muted-foreground">
                             +{item.tags.length - 5}
                           </span>
                         )}

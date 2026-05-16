@@ -166,7 +166,7 @@ export default function ModelThumbnail({
     return (
       <div
         ref={containerRef}
-        className={`flex items-center justify-center bg-gray-900 text-gray-500 text-xs ${className}`}
+        className={`flex items-center justify-center bg-background text-muted-foreground text-xs ${className}`}
       >
         Preview unavailable
       </div>
@@ -177,7 +177,7 @@ export default function ModelThumbnail({
     return (
       <div
         ref={containerRef}
-        className={`flex items-center justify-center bg-gray-900 text-gray-600 text-xs ${className}`}
+        className={`flex items-center justify-center bg-background text-muted-foreground text-xs ${className}`}
       >
         {visible ? "Rendering..." : ""}
       </div>
@@ -185,7 +185,7 @@ export default function ModelThumbnail({
   }
 
   return (
-    <div ref={containerRef} className={`bg-gray-900 flex items-center justify-center ${className}`}>
+    <div ref={containerRef} className={`bg-background flex items-center justify-center ${className}`}>
       <img
         src={dataUrl}
         alt="3D preview"

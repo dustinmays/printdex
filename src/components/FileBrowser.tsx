@@ -6,6 +6,7 @@ import FileIcon from "./FileIcon";
 import CatalogView from "./CatalogView";
 import ImportModal from "./ImportModal";
 import { useImportJobs, ImportJobPills } from "./ImportJobTracker";
+import { ThemeToggle } from "./ThemeToggle";
 
 const ModelViewer = dynamic(() => import("./ModelViewer"), { ssr: false });
 const ModelThumbnail = dynamic(() => import("./ModelThumbnail"), { ssr: false });
@@ -105,8 +106,8 @@ function TreeItem({
         }}
         className={`w-full text-left flex items-center gap-1 py-1 px-2 text-sm rounded transition-colors ${
           isActive
-            ? "bg-blue-900/40 text-blue-200"
-            : "text-gray-400 hover:text-white hover:bg-gray-800/60"
+            ? "bg-primary/20 text-primary"
+            : "text-muted-foreground hover:text-foreground hover:bg-muted"
         }`}
         style={{ paddingLeft: `${depth * 12 + 8}px` }}
       >
@@ -135,9 +136,11 @@ function TreeItem({
 function FolderTree({
   currentDir,
   onNavigate,
+  refreshKey,
 }: {
   currentDir: string;
   onNavigate: (dir: string) => void;
+  refreshKey: number;
 }) {
   const [tree, setTree] = useState<TreeNode[]>([]);
 
@@ -146,17 +149,17 @@ function FolderTree({
       .then((r) => r.json())
       .then(setTree)
       .catch(console.error);
-  }, []);
+  }, [refreshKey]);
 
   return (
-    <div className="w-56 flex-shrink-0 border-r border-gray-800 bg-gray-900/50 overflow-y-auto">
+    <div className="w-56 flex-shrink-0 border-r border-border bg-card overflow-y-auto">
       <div className="p-2">
         <button
           onClick={() => onNavigate("")}
           className={`w-full text-left flex items-center gap-1.5 py-1.5 px-2 text-sm rounded transition-colors ${
             currentDir === ""
-              ? "bg-blue-900/40 text-blue-200"
-              : "text-gray-400 hover:text-white hover:bg-gray-800/60"
+              ? "bg-primary/20 text-primary"
+              : "text-muted-foreground hover:text-foreground hover:bg-muted"
           }`}
         >
           <span>📁</span>
@@ -192,11 +195,11 @@ function Breadcrumbs({
     parts.length > 1 ? parts.slice(0, -1).join("/") : parts.length === 1 ? "" : null;
 
   return (
-    <div className="flex items-center gap-1 text-sm text-gray-400 px-4 py-2 bg-gray-800/50 border-b border-gray-700/50">
+    <div className="flex items-center gap-1 text-sm text-muted-foreground px-4 py-2 bg-card/50 border-b border-border/50">
       {parent !== null && (
         <button
           onClick={() => onNavigate(parent)}
-          className="hover:text-white transition-colors mr-2 px-1.5 py-0.5 rounded hover:bg-gray-700"
+          className="hover:text-foreground transition-colors mr-2 px-1.5 py-0.5 rounded hover:bg-muted"
           title="Go back"
         >
           ←
@@ -204,7 +207,7 @@ function Breadcrumbs({
       )}
       <button
         onClick={() => onNavigate("")}
-        className="hover:text-white transition-colors"
+        className="hover:text-foreground transition-colors"
       >
         ~
       </button>
@@ -212,10 +215,10 @@ function Breadcrumbs({
         const pathTo = parts.slice(0, i + 1).join("/");
         return (
           <span key={pathTo} className="flex items-center gap-1">
-            <span className="text-gray-600">/</span>
+            <span className="text-muted-foreground">/</span>
             <button
               onClick={() => onNavigate(pathTo)}
-              className="hover:text-white transition-colors"
+              className="hover:text-foreground transition-colors"
             >
               {part}
             </button>
@@ -230,13 +233,13 @@ function Breadcrumbs({
 
 function StatusBadge({ status }: { status: string }) {
   const colors: Record<string, string> = {
-    to_print: "bg-yellow-900/50 text-yellow-300",
-    printing: "bg-blue-900/50 text-blue-300",
-    printed: "bg-green-900/50 text-green-300",
-    failed: "bg-red-900/50 text-red-300",
+    to_print: "bg-warning/20 text-warning",
+    printing: "bg-primary/20 text-primary",
+    printed: "bg-success/20 text-success",
+    failed: "bg-error/20 text-error",
   };
   return (
-    <span className={`text-[10px] px-1.5 py-0.5 rounded ${colors[status] || "bg-gray-700 text-gray-300"}`}>
+    <span className={`text-[10px] px-1.5 py-0.5 rounded ${colors[status] || "bg-muted text-foreground"}`}>
       {status.replace(/_/g, " ")}
     </span>
   );
@@ -258,34 +261,34 @@ function PrintMetaPanel({ meta }: { meta: PrintMeta }) {
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2">
-        <h3 className="text-xs font-medium text-gray-300">{meta.name}</h3>
+        <h3 className="text-xs font-medium text-foreground">{meta.name}</h3>
         {meta.status && <StatusBadge status={meta.status} />}
       </div>
       {meta.author && (
-        <p className="text-[11px] text-gray-500">by {meta.author}</p>
+        <p className="text-[11px] text-muted-foreground">by {meta.author}</p>
       )}
       {meta.description && (
-        <p className="text-[11px] text-gray-400 leading-relaxed">{meta.description}</p>
+        <p className="text-[11px] text-muted-foreground leading-relaxed">{meta.description}</p>
       )}
       {fields.length > 0 && (
         <div className="grid grid-cols-2 gap-x-3 gap-y-1">
           {fields.map((f) => (
             <div key={f.label} className="text-[11px]">
-              <span className="text-gray-500">{f.label}: </span>
-              <span className="text-gray-300">{f.value}</span>
+              <span className="text-muted-foreground">{f.label}: </span>
+              <span className="text-foreground">{f.value}</span>
             </div>
           ))}
         </div>
       )}
       {meta.notes && (
-        <p className="text-[11px] text-gray-500 italic leading-relaxed">{meta.notes}</p>
+        <p className="text-[11px] text-muted-foreground italic leading-relaxed">{meta.notes}</p>
       )}
       {meta.source && (
         <a
           href={meta.source}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-[11px] text-blue-400 hover:text-blue-300 underline"
+          className="text-[11px] text-primary hover:text-primary underline"
         >
           View on source
         </a>
@@ -322,18 +325,18 @@ function PreviewPanel({
   const folderPath = parentDir(file.relativePath);
 
   return (
-    <div className="w-1/2 border-l border-gray-800 flex flex-col">
+    <div className="w-1/2 border-l border-border flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2 bg-gray-900 border-b border-gray-800">
+      <div className="flex items-center justify-between px-4 py-2 bg-background border-b border-border">
         <div className="min-w-0">
           <h2 className="font-medium text-sm truncate">{file.name}</h2>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-muted-foreground">
             {formatSize(file.size)} &middot; {formatDate(file.modified)}
           </p>
         </div>
         <button
           onClick={onClose}
-          className="text-gray-400 hover:text-white text-lg flex-shrink-0 ml-2"
+          className="text-muted-foreground hover:text-foreground text-lg flex-shrink-0 ml-2"
         >
           ✕
         </button>
@@ -349,10 +352,10 @@ function PreviewPanel({
       </div>
 
       {/* Actions & Metadata drawer */}
-      <div className="border-t border-gray-800 bg-gray-900">
+      <div className="border-t border-border bg-background">
         <button
           onClick={() => setActionsOpen(!actionsOpen)}
-          className="w-full flex items-center justify-between px-4 py-2 text-xs text-gray-400 hover:text-white transition-colors"
+          className="w-full flex items-center justify-between px-4 py-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
         >
           <span className="font-medium">Details & Actions</span>
           <span>{actionsOpen ? "▼" : "▶"}</span>
@@ -364,14 +367,14 @@ function PreviewPanel({
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => onNavigate(folderPath)}
-                className="text-[11px] px-2.5 py-1 rounded bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
+                className="text-[11px] px-2.5 py-1 rounded bg-card text-foreground hover:bg-muted hover:text-foreground transition-colors"
               >
                 Open folder
               </button>
               <a
                 href={fileUrl(file.relativePath)}
                 download={file.name}
-                className="text-[11px] px-2.5 py-1 rounded bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
+                className="text-[11px] px-2.5 py-1 rounded bg-card text-foreground hover:bg-muted hover:text-foreground transition-colors"
               >
                 Download
               </a>
@@ -379,7 +382,7 @@ function PreviewPanel({
                 onClick={() => {
                   navigator.clipboard.writeText(file.relativePath);
                 }}
-                className="text-[11px] px-2.5 py-1 rounded bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
+                className="text-[11px] px-2.5 py-1 rounded bg-card text-foreground hover:bg-muted hover:text-foreground transition-colors"
               >
                 Copy path
               </button>
@@ -388,25 +391,25 @@ function PreviewPanel({
             {/* File metadata */}
             <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px]">
               <div>
-                <span className="text-gray-500">Location: </span>
+                <span className="text-muted-foreground">Location: </span>
                 <button
                   onClick={() => onNavigate(folderPath)}
-                  className="text-blue-400 hover:text-blue-300"
+                  className="text-primary hover:text-primary"
                 >
                   {folderPath || "/"}
                 </button>
               </div>
               <div>
-                <span className="text-gray-500">Type: </span>
-                <span className="text-gray-300">{file.extension.toUpperCase().slice(1)}</span>
+                <span className="text-muted-foreground">Type: </span>
+                <span className="text-foreground">{file.extension.toUpperCase().slice(1)}</span>
               </div>
             </div>
 
             {/* Print metadata from prints.yaml */}
             {metaLoading ? (
-              <p className="text-[11px] text-gray-600">Loading print info...</p>
+              <p className="text-[11px] text-muted-foreground">Loading print info...</p>
             ) : printMeta ? (
-              <div className="border-t border-gray-800 pt-2">
+              <div className="border-t border-border pt-2">
                 <PrintMetaPanel meta={printMeta} />
               </div>
             ) : null}
@@ -428,6 +431,7 @@ export default function FileBrowser() {
   const [viewMode, setViewMode] = useState<"list" | "grid">("grid");
   const [importOpen, setImportOpen] = useState(false);
   const [catalogKey, setCatalogKey] = useState(0);
+  const [treeKey, setTreeKey] = useState(0);
 
   const fetchFiles = useCallback(async (dir: string) => {
     setLoading(true);
@@ -459,6 +463,7 @@ export default function FileBrowser() {
   const handleImportComplete = useCallback(() => {
     fetchFiles(currentDir);
     setCatalogKey((k) => k + 1);
+    setTreeKey((k) => k + 1);
     fetch("/api/catalog", { method: "POST" }).catch(() => {});
   }, [currentDir, fetchFiles]);
 
@@ -481,20 +486,20 @@ export default function FileBrowser() {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-gray-950 text-gray-100">
+    <div className="h-screen flex flex-col bg-background text-foreground">
       {/* Header */}
-      <header className="flex items-center justify-between px-4 py-3 bg-gray-900 border-b border-gray-800">
+      <header className="flex items-center justify-between px-4 py-3 bg-background border-b border-border">
         <div className="flex items-center gap-4">
           <h1 className="text-lg font-semibold tracking-tight">
             PrintDex
           </h1>
-          <div className="flex items-center gap-1 bg-gray-800 rounded p-0.5">
+          <div className="flex items-center gap-1 bg-card rounded p-0.5">
             <button
               onClick={() => setMode("browse")}
               className={`px-2.5 py-1 rounded text-xs transition-colors ${
                 mode === "browse"
-                  ? "bg-gray-600 text-white"
-                  : "text-gray-400 hover:text-white"
+                  ? "bg-muted text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               Browse
@@ -503,8 +508,8 @@ export default function FileBrowser() {
               onClick={() => setMode("catalog")}
               className={`px-2.5 py-1 rounded text-xs transition-colors ${
                 mode === "catalog"
-                  ? "bg-gray-600 text-white"
-                  : "text-gray-400 hover:text-white"
+                  ? "bg-muted text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               Catalog
@@ -517,8 +522,8 @@ export default function FileBrowser() {
               onClick={() => setViewMode("list")}
               className={`px-2 py-1 rounded text-sm ${
                 viewMode === "list"
-                  ? "bg-gray-700 text-white"
-                  : "text-gray-400 hover:text-white"
+                  ? "bg-muted text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               ☰ List
@@ -527,8 +532,8 @@ export default function FileBrowser() {
               onClick={() => setViewMode("grid")}
               className={`px-2 py-1 rounded text-sm ${
                 viewMode === "grid"
-                  ? "bg-gray-700 text-white"
-                  : "text-gray-400 hover:text-white"
+                  ? "bg-muted text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               ⊞ Grid
@@ -539,10 +544,11 @@ export default function FileBrowser() {
           <ImportJobPills jobs={importJobs} onDismiss={dismissJob} />
           <button
             onClick={() => setImportOpen(true)}
-            className="px-3 py-1.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-500 transition-colors"
+            className="px-3 py-1.5 text-xs bg-primary text-primary-foreground rounded hover:bg-primary-hover transition-colors"
           >
             + Import
           </button>
+          <ThemeToggle />
         </div>
       </header>
 
@@ -562,7 +568,7 @@ export default function FileBrowser() {
       {/* Body: sidebar + content + preview */}
       <div className="flex-1 flex overflow-hidden">
         {/* Folder tree sidebar */}
-        <FolderTree currentDir={currentDir} onNavigate={navigate} />
+        <FolderTree currentDir={currentDir} onNavigate={navigate} refreshKey={treeKey} />
 
         {/* File list / grid */}
         <div
@@ -571,17 +577,17 @@ export default function FileBrowser() {
           }`}
         >
           {loading ? (
-            <div className="flex items-center justify-center h-full text-gray-500">
+            <div className="flex items-center justify-center h-full text-muted-foreground">
               Loading...
             </div>
           ) : files.length === 0 ? (
-            <div className="flex items-center justify-center h-full text-gray-500">
+            <div className="flex items-center justify-center h-full text-muted-foreground">
               Empty directory
             </div>
           ) : viewMode === "list" ? (
             <table className="w-full">
               <thead>
-                <tr className="text-left text-xs text-gray-500 border-b border-gray-800">
+                <tr className="text-left text-xs text-muted-foreground border-b border-border">
                   <th className="px-4 py-2 font-medium">Name</th>
                   <th className="px-4 py-2 font-medium w-24">Size</th>
                   <th className="px-4 py-2 font-medium w-32">Modified</th>
@@ -592,10 +598,10 @@ export default function FileBrowser() {
                   <tr
                     key={file.relativePath}
                     onClick={() => handleClick(file)}
-                    className={`cursor-pointer border-b border-gray-800/50 transition-colors ${
+                    className={`cursor-pointer border-b border-border/50 transition-colors ${
                       selectedFile?.relativePath === file.relativePath
-                        ? "bg-blue-900/30"
-                        : "hover:bg-gray-800/50"
+                        ? "bg-primary/20"
+                        : "hover:bg-card/50"
                     } ${file.isDirectory ? "font-medium" : ""}`}
                   >
                     <td className="px-4 py-2 flex items-center gap-2">
@@ -605,15 +611,15 @@ export default function FileBrowser() {
                       />
                       <span className="truncate">{file.name}</span>
                       {canPreview(file) && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-900/50 text-blue-300">
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/20 text-primary">
                           3D
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-2 text-sm text-gray-500">
+                    <td className="px-4 py-2 text-sm text-muted-foreground">
                       {file.isDirectory ? "—" : formatSize(file.size)}
                     </td>
-                    <td className="px-4 py-2 text-sm text-gray-500">
+                    <td className="px-4 py-2 text-sm text-muted-foreground">
                       {formatDate(file.modified)}
                     </td>
                   </tr>
@@ -628,11 +634,11 @@ export default function FileBrowser() {
                   onClick={() => handleClick(file)}
                   className={`group cursor-pointer rounded-lg border transition-all ${
                     selectedFile?.relativePath === file.relativePath
-                      ? "border-blue-500 bg-blue-900/20"
-                      : "border-gray-800 hover:border-gray-600 bg-gray-900/50"
+                      ? "border-primary bg-primary/10"
+                      : "border-border hover:border-border bg-card"
                   }`}
                 >
-                  <div className="aspect-square flex items-center justify-center bg-gray-900/80 rounded-t-lg overflow-hidden">
+                  <div className="aspect-square flex items-center justify-center bg-card rounded-t-lg overflow-hidden">
                     {canPreview(file) ? (
                       <ModelThumbnail
                         url={fileUrl(file.relativePath)}
@@ -649,7 +655,7 @@ export default function FileBrowser() {
                     <p className="text-xs truncate" title={file.name}>
                       {file.name}
                     </p>
-                    <p className="text-[10px] text-gray-500">
+                    <p className="text-[10px] text-muted-foreground">
                       {file.isDirectory ? "Folder" : formatSize(file.size)}
                     </p>
                   </div>
