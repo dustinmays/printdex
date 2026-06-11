@@ -1,0 +1,62 @@
+version: 1
+scanned_at: 2026-05-19T18:19:35.79321Z
+inventory:
+    languages:
+        - javascript
+        - typescript
+    package_managers:
+        - npm
+    build_files:
+        - package.json
+        - next.config.ts
+        - tsconfig.json
+    ci: []
+    tooling:
+        secrets: ""
+        process: ""
+        containers: ""
+        env:
+            - PRINTDEX_CONFIG
+            - WATCH_DIR
+    existing_claude_config:
+        settings_json: false
+        agent_def: true
+        claude_md: true
+context:
+    build_command: "npm run build"
+    test_command: "npm test"
+    lint_command: "npm run lint"
+    test_timeout: "5m"
+    build_timeout: "10m"
+    base_branch: "main"
+    special_instructions: |
+        - Next.js 16 (App Router) — APIs and conventions differ from older versions.
+          Read node_modules/next/dist/docs/ before writing Next.js code; heed deprecation notices.
+        - Dynamic route params are Promise-based:
+          { params }: { params: Promise<{ id: string }> } and const { id } = await params;
+        - Never hardcode file paths in API routes. Always use getConfig().baseDir
+          from @/lib/config.
+        - config.yaml is gitignored and user-local — do not commit changes to it.
+          Use config.example.yaml as the template.
+        - The /api/import feature is optional and gracefully degrades when the
+          Claude Code CLI is not installed. Preserve that behavior.
+        - 3D rendering uses Three.js via React Three Fiber. Thumbnails render
+          once to static PNG — do not introduce persistent WebGL contexts.
+    tools_needed:
+        - Bash
+        - Read
+        - Edit
+        - Write
+        - Glob
+        - Grep
+permissions:
+    allowed_tools:
+        - Bash
+        - Read
+        - Edit
+        - Write
+        - Glob
+        - Grep
+validation:
+    status: passed
+    failures: []

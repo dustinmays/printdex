@@ -1,0 +1,6 @@
+jobs:
+  implement-issue:
+    trigger: "label:agent-ready"
+    agent: autopilot
+    description: "Implement issues labeled agent-ready end-to-end and open a PR"
+    budget: 5.0
