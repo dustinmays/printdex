@@ -1,36 +1,21 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
-
-interface StreamEvent {
-  type: string;
-  subtype?: string;
-  message?: string;
-  timestamp: number;
-}
-
-interface ImportResult {
-  cost_usd: number;
-  num_turns: number;
-  max_turns: number;
-  session_id: string;
-  summary: string;
-}
-
-interface Job {
-  id: string;
-  status: "uploading" | "running" | "completed" | "failed";
-  files: string[];
-  url: string;
-  events: StreamEvent[];
-  result: ImportResult | null;
-  error: string | null;
-  latestMessage: string;
-}
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import {
+  ImportJob,
+  ImportStreamEvent,
+  splitImportJobs,
+} from "@/lib/importJobs";
 
 export function useImportJobs(onComplete: () => void) {
-  const [jobs, setJobs] = useState<Job[]>([]);
+  const [jobs, setJobs] = useState<ImportJob[]>([]);
   const pollRefs = useRef<Map<string, ReturnType<typeof setInterval>>>(new Map());
+  const seqRef = useRef(0);
+
+  const nextSeq = useCallback(() => {
+    seqRef.current += 1;
+    return seqRef.current;
+  }, []);
 
   const startPolling = useCallback(
     (jobId: string) => {
@@ -40,8 +25,8 @@ export function useImportJobs(onComplete: () => void) {
           const data = await res.json();
 
           const msgs = (data.events || [])
-            .filter((e: StreamEvent) => e.message)
-            .map((e: StreamEvent) => e.message);
+            .filter((e: ImportStreamEvent) => e.message)
+            .map((e: ImportStreamEvent) => e.message);
 
           setJobs((prev) =>
             prev.map((j) =>
@@ -54,6 +39,10 @@ export function useImportJobs(onComplete: () => void) {
                     error: data.error,
                     latestMessage:
                       msgs.length > 0 ? msgs[msgs.length - 1] : j.latestMessage,
+                    finishedAt:
+                      data.status === "completed" || data.status === "failed"
+                        ? j.finishedAt ?? Date.now()
+                        : j.finishedAt,
                   }
                 : j
             )
@@ -91,7 +80,7 @@ export function useImportJobs(onComplete: () => void) {
         const data = await res.json();
 
         if (!res.ok) {
-          const job: Job = {
+          const job: ImportJob = {
             id: crypto.randomUUID(),
             status: "failed",
             files: files.map((f) => f.name),
@@ -100,12 +89,14 @@ export function useImportJobs(onComplete: () => void) {
             result: null,
             error: data.error || "Upload failed",
             latestMessage: "Upload failed",
+            seq: nextSeq(),
+            finishedAt: Date.now(),
           };
           setJobs((prev) => [...prev, job]);
           return;
         }
 
-        const job: Job = {
+        const job: ImportJob = {
           id: data.jobId,
           status: "running",
           files: files.map((f) => f.name),
@@ -114,11 +105,12 @@ export function useImportJobs(onComplete: () => void) {
           result: null,
           error: null,
           latestMessage: "Starting inventory agent...",
+          seq: nextSeq(),
         };
         setJobs((prev) => [...prev, job]);
         startPolling(data.jobId);
       } catch (err) {
-        const job: Job = {
+        const job: ImportJob = {
           id: crypto.randomUUID(),
           status: "failed",
           files: files.map((f) => f.name),
@@ -127,11 +119,13 @@ export function useImportJobs(onComplete: () => void) {
           result: null,
           error: err instanceof Error ? err.message : "Upload failed",
           latestMessage: "Upload failed",
+          seq: nextSeq(),
+          finishedAt: Date.now(),
         };
         setJobs((prev) => [...prev, job]);
       }
     },
-    [startPolling]
+    [startPolling, nextSeq]
   );
 
   const dismissJob = useCallback((jobId: string) => {
@@ -157,20 +151,79 @@ export function useImportJobs(onComplete: () => void) {
 
 /* ── Header status pills ── */
 
+interface JobReportProps {
+  job: ImportJob;
+  onDismiss: (id: string) => void;
+  dismissible?: boolean;
+}
+
+function JobReport({ job, onDismiss, dismissible = true }: JobReportProps) {
+  return (
+    <div className="px-3 py-2 space-y-1.5 max-h-48 overflow-y-auto">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium text-foreground truncate">
+          {job.files.join(", ")}
+        </span>
+        {dismissible && job.status !== "running" && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onDismiss(job.id);
+            }}
+            className="text-muted-foreground hover:text-foreground text-sm"
+            aria-label="Dismiss job"
+          >
+            ✕
+          </button>
+        )}
+      </div>
+      {job.status === "running" && (
+        <p className="text-[11px] text-primary">{job.latestMessage}</p>
+      )}
+      {job.status === "completed" && job.result && (
+        <>
+          <p className="text-[11px] text-success whitespace-pre-wrap">
+            {job.result.summary}
+          </p>
+          <p className="text-[10px] text-muted-foreground">
+            {job.result.num_turns} steps &middot; $
+            {job.result.cost_usd.toFixed(3)}
+          </p>
+        </>
+      )}
+      {job.status === "failed" && (
+        <p className="text-[11px] text-error">{job.error}</p>
+      )}
+      {job.events
+        .filter((e) => e.message)
+        .slice(-8)
+        .map((e, i) => (
+          <p key={i} className="text-[10px] text-muted-foreground">
+            {e.message}
+          </p>
+        ))}
+    </div>
+  );
+}
+
 export function ImportJobPills({
   jobs,
   onDismiss,
 }: {
-  jobs: Job[];
+  jobs: ImportJob[];
   onDismiss: (id: string) => void;
 }) {
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [previousOpen, setPreviousOpen] = useState(false);
+  const [openPreviousId, setOpenPreviousId] = useState<string | null>(null);
+
+  const { pills, previous } = useMemo(() => splitImportJobs(jobs), [jobs]);
 
   if (jobs.length === 0) return null;
 
   return (
     <div className="flex items-center gap-2">
-      {jobs.map((job) => (
+      {pills.map((job) => (
         <div key={job.id} className="relative">
           <button
             onClick={() =>
@@ -195,58 +248,68 @@ export function ImportJobPills({
             </span>
           </button>
 
-          {/* Expanded dropdown */}
           {expanded === job.id && (
             <div className="absolute right-0 top-full mt-1 w-80 bg-background border border-border rounded-lg shadow-xl z-50 overflow-hidden">
-              <div className="px-3 py-2 border-b border-border flex items-center justify-between">
-                <span className="text-xs font-medium text-foreground">
-                  Import: {job.files.join(", ")}
-                </span>
-                {job.status !== "running" && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDismiss(job.id);
-                    }}
-                    className="text-muted-foreground hover:text-foreground text-sm"
-                  >
-                    ✕
-                  </button>
-                )}
-              </div>
-              <div className="px-3 py-2 space-y-1.5 max-h-48 overflow-y-auto">
-                {job.status === "running" && (
-                  <p className="text-[11px] text-primary">
-                    {job.latestMessage}
-                  </p>
-                )}
-                {job.status === "completed" && job.result && (
-                  <>
-                    <p className="text-[11px] text-success whitespace-pre-wrap">
-                      {job.result.summary}
-                    </p>
-                    <p className="text-[10px] text-muted-foreground">
-                      {job.result.num_turns} steps &middot; $
-                      {job.result.cost_usd.toFixed(3)}
-                    </p>
-                  </>
-                )}
-                {job.status === "failed" && (
-                  <p className="text-[11px] text-error">{job.error}</p>
-                )}
-                {job.events
-                  .filter((e) => e.message)
-                  .slice(-8)
-                  .map((e, i) => (
-                    <p key={i} className="text-[10px] text-muted-foreground">
-                      {e.message}
-                    </p>
-                  ))}
-              </div>
+              <JobReport job={job} onDismiss={onDismiss} />
             </div>
           )}
         </div>
       ))}
+
+      {previous.length > 0 && (
+        <div className="relative">
+          <button
+            onClick={() => {
+              setPreviousOpen((v) => !v);
+              setOpenPreviousId(null);
+            }}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] bg-muted text-muted-foreground hover:text-foreground transition-colors"
+            aria-expanded={previousOpen}
+            aria-label="Previous import jobs"
+          >
+            <span>Previous</span>
+            <span className="px-1 rounded bg-card text-[10px]">
+              {previous.length}
+            </span>
+          </button>
+
+          {previousOpen && (
+            <div className="absolute right-0 top-full mt-1 w-80 bg-background border border-border rounded-lg shadow-xl z-50 overflow-hidden">
+              <div className="px-3 py-2 border-b border-border text-[11px] font-medium text-muted-foreground">
+                Previous imports
+              </div>
+              <ul className="max-h-80 overflow-y-auto divide-y divide-border">
+                {previous.map((job) => {
+                  const open = openPreviousId === job.id;
+                  return (
+                    <li key={job.id}>
+                      <button
+                        onClick={() =>
+                          setOpenPreviousId(open ? null : job.id)
+                        }
+                        className="w-full flex items-center justify-between gap-2 px-3 py-2 text-left hover:bg-muted/40 transition-colors"
+                      >
+                        <span className="text-[11px] truncate text-foreground">
+                          {job.files[0]}
+                          {job.files.length > 1 && ` +${job.files.length - 1}`}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground">
+                          {open ? "▾" : "▸"}
+                        </span>
+                      </button>
+                      {open && (
+                        <div className="border-t border-border bg-card/40">
+                          <JobReport job={job} onDismiss={onDismiss} />
+                        </div>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
